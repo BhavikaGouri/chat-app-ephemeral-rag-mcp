@@ -1,8 +1,9 @@
 import streamlit as st
 from pypdf import PdfReader
-from core.llm import generate_answer
+from core.classifier import classify_answer
+from core.llm import generate_answer, generate_answer_with_llm
 from rag.ingestion import split_text_into_chunks
-from rag.embeddings import create_ephemeral_index, retrieve_relevant_chunks
+from rag.embeddings import create_ephemeral_index, retrieve_relevant_chunks, retrieve_chunks_mmr
 
 
 st.set_page_config(page_title="ChatBot", page_icon="💬", layout="centered")
@@ -189,20 +190,34 @@ if st.session_state.page == "chat":
             })
             st.rerun()
 
+
     # ── Handle user text input ───────────────────────────────────────────────
     if user_input and user_input.strip():
         query = user_input.strip()
         st.session_state.messages.append({"role": "user", "content": query})
 
         if st.session_state.collection:
-            relevant_chunks = retrieve_relevant_chunks(query, st.session_state.collection)
+            intent = classify_answer(query)
+            if intent == "search":
+                relevant_chunks = retrieve_relevant_chunks(query, st.session_state.collection, top_k=3)
+            elif intent == "explanation":
+                relevant_chunks = retrieve_relevant_chunks(query, st.session_state.collection, top_k=6)
+            elif intent == "generation":
+                relevant_chunks = retrieve_chunks_mmr(query, st.session_state.collection, top_k=5)
+
             # Collect stream into full reply to keep bubble UI consistent
             with st.spinner("Thinking..."):
                 reply = ""
                 for chunk in generate_answer(query, relevant_chunks):
                     reply += chunk
         else:
-            reply = "Please upload a PDF first."
+            GREETINGS = ["hi", "hello", "hey", "how are you", "what's up"]
+            if any(query.lower().startswith(g) for g in GREETINGS):
+                reply = "Hey! 👋 Ask me anything by uploading a Document."
+            else:
+                reply = ""
+                for chunk in generate_answer_with_llm(query):
+                    reply += chunk
 
         st.session_state.messages.append({"role": "assistant", "content": reply})
         st.rerun()
