@@ -219,8 +219,5 @@ This project was built as a portfolio piece demonstrating:
 Production Engineering Student, Sharda University  
 GitHub: [@BhavikaGouri](https://github.com/BhavikaGouri)
 
----
-
-## License
 
 MIT License
