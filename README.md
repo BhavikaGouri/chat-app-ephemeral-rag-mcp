@@ -216,5 +216,4 @@ This project was built as a portfolio piece demonstrating:
 ## Author
 
 **Bhavika Gouri**  
-Production Engineering Student, Sharda University  
-GitHub: [@BhavikaGouri](https://github.com/BhavikaGouri
+GitHub: [@BhavikaGouri]
